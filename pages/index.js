@@ -4,8 +4,9 @@ import Todo from "../components/Todo";
 import { table, minifyRecords } from "./api/utils/Airtable";
 import { TodosContext } from "../context/TodosContext";
 import { useEffect, useContext } from "react";
+import auth0 from "./api/utils/auth0";
 
-export default function Home({ initialTodos }) {
+export default function Home({ initialTodos, user }) {
   const { todos, setTodos } = useContext(TodosContext);
   useEffect(() => {
     setTodos(initialTodos);
@@ -17,7 +18,7 @@ export default function Home({ initialTodos }) {
         <title>Authenticated TODO App</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Navbar />
+      <Navbar user={user} />
 
       <main>
         <h1>Todo App</h1>
@@ -30,11 +31,13 @@ export default function Home({ initialTodos }) {
 }
 
 export async function getServerSideProps(context) {
+  const session = await auth0.getSession(context.req);
   try {
     const todos = await table.select({}).firstPage();
     return {
       props: {
         initialTodos: minifyRecords(todos),
+        user: session?.user || null,
       },
     };
   } catch (err) {
